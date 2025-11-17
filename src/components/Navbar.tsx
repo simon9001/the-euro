@@ -1,5 +1,3 @@
-// src/components/Navbar.tsx
-import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import type { JSX } from 'react/jsx-runtime';
 
@@ -10,7 +8,6 @@ interface NavItem {
 }
 
 export default function Navbar(): JSX.Element {
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false)
   const location = useLocation()
 
   const navItems: NavItem[] = [
@@ -31,7 +28,6 @@ export default function Navbar(): JSX.Element {
         element.scrollIntoView({ behavior: 'smooth' })
       }
     }
-    setIsDrawerOpen(false)
   }
 
   return (
@@ -58,7 +54,6 @@ export default function Navbar(): JSX.Element {
                     <Link 
                       to={item.path}
                       className="text-memorial-dark hover:text-memorial-gold"
-                      onClick={() => setIsDrawerOpen(false)}
                     >
                       {item.name}
                     </Link>

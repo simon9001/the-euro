@@ -191,7 +191,7 @@ export default function GallerySection({ preview = false }: GallerySectionProps)
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-          {visibleImages.map((image, index) => (
+          {visibleImages.map((image) => (
             <div
               key={image.id}
               className="card bg-base-100 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden"
