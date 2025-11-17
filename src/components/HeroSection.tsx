@@ -19,7 +19,7 @@ export default function HeroSection(): JSX.Element {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(/images/hero-bg.jpg)'
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(https://www.homekazi.co.ke/public/assets/uploads/bettybayo_1673949073.jpeg)'
         }}
       />
       
