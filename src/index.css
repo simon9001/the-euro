@@ -73,3 +73,49 @@
 .animate-slide-up {
   animation: slideUp 0.5s ease-out;
 }
+
+/* Leaflet CSS */
+@import 'leaflet/dist/leaflet.css';
+
+/* Custom memorial map styles */
+.memorial-map .leaflet-container {
+  background: #f3f4f6;
+  font-family: inherit;
+  border-radius: 1rem;
+}
+
+.candle-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px);
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes soft-glow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3)); 
+  }
+  50% { 
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.5)); 
+  }
+}
+
+.animate-soft-glow {
+  animation: soft-glow 2s ease-in-out infinite;
+}

@@ -1,3 +1,4 @@
+// src/components/Navbar.tsx
 import { Link, useLocation } from 'react-router'
 import type { JSX } from 'react/jsx-runtime';
 
@@ -17,6 +18,7 @@ export default function Navbar(): JSX.Element {
     { name: 'Tributes', href: '#tributes', path: '/tributes' },
     { name: 'Gallery', href: '#gallery', path: '/gallery' },
     { name: 'Timeline', href: '#timeline', path: '/timeline' },
+    { name: 'Visit Memorial', href: '#memorial-map', path: '/' }, // Changed from '/memorial' to '/'
     { name: 'Videos', href: '#videos', path: '/videos' },
     { name: 'Support', href: '#support', path: '/' }
   ]
@@ -27,7 +29,17 @@ export default function Navbar(): JSX.Element {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' })
       }
+    } else {
+      // If we're not on home page, navigate to home first then scroll
+      window.location.href = `/${href}`
     }
+  }
+
+  const handleNavClick = (item: NavItem): void => {
+    if (item.path === '/') {
+      scrollToSection(item.href)
+    }
+    // For other pages, the Link component will handle navigation
   }
 
   return (
@@ -45,15 +57,16 @@ export default function Navbar(): JSX.Element {
                 <li key={item.name}>
                   {item.path === '/' ? (
                     <a 
-                      onClick={() => scrollToSection(item.href)} 
-                      className="text-memorial-dark hover:text-memorial-gold cursor-pointer"
+                      onClick={() => handleNavClick(item)} 
+                      className="text-memorial-dark hover:text-memorial-gold cursor-pointer flex items-center gap-2"
                     >
+                      {item.name === 'Visit Memorial' && <span className="text-sm">📍</span>}
                       {item.name}
                     </a>
                   ) : (
                     <Link 
                       to={item.path}
-                      className="text-memorial-dark hover:text-memorial-gold"
+                      className="text-memorial-dark hover:text-memorial-gold flex items-center gap-2"
                     >
                       {item.name}
                     </Link>
@@ -71,15 +84,16 @@ export default function Navbar(): JSX.Element {
               <li key={item.name}>
                 {item.path === '/' ? (
                   <a 
-                    onClick={() => scrollToSection(item.href)}
-                    className="text-memorial-dark hover:text-memorial-gold transition-colors cursor-pointer"
+                    onClick={() => handleNavClick(item)}
+                    className="text-memorial-dark hover:text-memorial-gold transition-colors cursor-pointer flex items-center gap-1"
                   >
+                    {item.name === 'Visit Memorial' && <span className="text-sm">📍</span>}
                     {item.name}
                   </a>
                 ) : (
                   <Link 
                     to={item.path}
-                    className="text-memorial-dark hover:text-memorial-gold transition-colors"
+                    className="text-memorial-dark hover:text-memorial-gold transition-colors flex items-center gap-1"
                   >
                     {item.name}
                   </Link>

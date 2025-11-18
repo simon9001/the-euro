@@ -8,6 +8,7 @@ import Tributes from './pages/Tributes'
 import Gallery from './pages/Gallery'
 import Timeline from './pages/Timeline'
 import Videos from './pages/Videos'
+import Memorial from './pages/Memorial.tsx';
 import { type JSX } from 'react/jsx-runtime'
 
 function App(): JSX.Element {
@@ -31,6 +32,7 @@ function App(): JSX.Element {
   return (
     <div className="min-h-screen bg-memorial-light">
       <Routes>
+      <Route path="/memorial" element={<Memorial />} />
         <Route path="/" element={<Home />} />
         <Route path="/story" element={<LifeStory />} />
         <Route path="/music" element={<Discography />} />
