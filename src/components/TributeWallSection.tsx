@@ -30,6 +30,7 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
   const [userLocation, setUserLocation] = useState<string>('')
   const [isGettingLocation, setIsGettingLocation] = useState<boolean>(false)
   const [locationError, setLocationError] = useState<string>('')
+  const [showTributeForm, setShowTributeForm] = useState<boolean>(false)
 
   const { 
     register, 
@@ -41,6 +42,12 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
   } = useForm<TributeFormData>()
 
   const visibleTributes = preview ? tributes.slice(0, 4) : tributes
+
+  // Calculate statistics
+  const totalTributes = tributes.length
+  const candlesLit = tributes.filter(t => t.hasCandle).length
+  const uniqueCountries = new Set(tributes.map(t => t.location).filter(Boolean)).size
+  const prayerWallActive = totalTributes > 0 // Prayer wall is active if there are tributes
 
   // Load tributes on component mount
   useEffect(() => {
@@ -257,6 +264,7 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
     saveTributes(updatedTributes)
     reset()
     setShowSuccess(true)
+    setShowTributeForm(false) // Hide form after successful submission
     
     // Hide success message after 5 seconds
     setTimeout(() => setShowSuccess(false), 5000)
@@ -313,6 +321,10 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
     }
   }
 
+  const handleShareTributeClick = (): void => {
+    setShowTributeForm(true)
+  }
+
   if (isLoading) {
     return (
       <section id="tributes" className="section-padding bg-white">
@@ -336,7 +348,7 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
           <div>
             <h2 className="section-title text-left mb-2">Tribute Wall</h2>
             <p className="text-gray-600 text-lg max-w-3xl">
-              Join {tributes.length}+ people in honoring Betty's memory and celebrating her eternal impact
+              Join {totalTributes}+ people in honoring Betty's memory and celebrating her eternal impact
             </p>
           </div>
           <div className="flex gap-2">
@@ -359,192 +371,224 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
           </div>
         </div>
 
-        {/* Statistics */}
+        {/* Statistics - Updated with pink text */}
         {!preview && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-memorial-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-memorial-gold">{tributes.length}</div>
-              <div className="text-gray-600 text-sm">Total Tributes</div>
+            <div className="bg-pink-50 rounded-lg p-4 text-center border border-pink-100">
+              <div className="text-2xl font-bold text-pink-600">{totalTributes}</div>
+              <div className="text-pink-700 text-sm font-medium">Total Tributes</div>
             </div>
-            <div className="bg-memorial-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-memorial-gold">{tributes.filter(t => t.hasCandle).length}</div>
-              <div className="text-gray-600 text-sm">Candles Lit</div>
+            <div className="bg-pink-50 rounded-lg p-4 text-center border border-pink-100">
+              <div className="text-2xl font-bold text-pink-600">{candlesLit}</div>
+              <div className="text-pink-700 text-sm font-medium">Candles Lit</div>
             </div>
-            <div className="bg-memorial-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-memorial-gold">6+</div>
-              <div className="text-gray-600 text-sm">Countries</div>
+            <div className="bg-pink-50 rounded-lg p-4 text-center border border-pink-100">
+              <div className="text-2xl font-bold text-pink-600">{uniqueCountries}+</div>
+              <div className="text-pink-700 text-sm font-medium">Countries</div>
             </div>
-            <div className="bg-memorial-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-memorial-gold">24/7</div>
-              <div className="text-gray-600 text-sm">Prayer Wall</div>
+            <div className="bg-pink-50 rounded-lg p-4 text-center border border-pink-100">
+              <div className="text-2xl font-bold text-pink-600">{prayerWallActive ? '24/7' : '0'}</div>
+              <div className="text-pink-700 text-sm font-medium">Prayer Wall</div>
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Tribute Form */}
-          <div className="lg:col-span-1">
-            <div className="card bg-base-100 shadow-xl sticky top-24">
-              <div className="card-body">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="text-2xl">🕯️</div>
-                  <h3 className="card-title text-memorial-dark">Share Your Tribute</h3>
-                </div>
-                
-                {showSuccess && (
-                  <div className="alert alert-success bg-green-50 border-green-200 mb-4">
-                    <div className="flex items-center gap-2">
-                      <span>✅</span>
-                      <span className="text-green-800">Thank you for your tribute! It has been added to the wall.</span>
+          {/* Tribute Form - Conditionally Rendered */}
+          {showTributeForm && (
+            <div className="lg:col-span-1">
+              <div className="card bg-base-100 shadow-xl sticky top-24">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">🕯️</div>
+                      <h3 className="card-title text-memorial-dark">Share Your Tribute</h3>
                     </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Your Name *</span>
-                    </label>
-                    <input
-                      type="text"
-                      {...register("name", { 
-                        required: "Name is required",
-                        minLength: { value: 2, message: "Name must be at least 2 characters" }
-                      })}
-                      className="input input-bordered"
-                      placeholder="Enter your full name"
-                    />
-                    {errors.name && (
-                      <span className="text-red-500 text-sm">{errors.name.message}</span>
-                    )}
-                  </div>
-
-                  {/* Relationship Input - Always Show */}
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Your Relationship *</span>
-                    </label>
-                    <select 
-                      {...register("relationship", { required: "Please select your relationship" })}
-                      className="select select-bordered"
+                    <button 
+                      onClick={() => setShowTributeForm(false)}
+                      className="btn btn-sm btn-ghost text-gray-500 hover:text-red-500"
                     >
-                      <option value="">Select your relationship</option>
-                      <option value="Fan">Fan</option>
-                      <option value="Friend">Friend</option>
-                      <option value="Fellow Minister">Fellow Minister</option>
-                      <option value="Family">Family</option>
-                      <option value="Mentee">Mentee</option>
-                      <option value="Spiritual Father">Spiritual Leader</option>
-                      <option value="International Fan">International Fan</option>
-                    </select>
-                    {errors.relationship && (
-                      <span className="text-red-500 text-sm">{errors.relationship.message}</span>
-                    )}
+                      ✕
+                    </button>
                   </div>
+                  
+                  {showSuccess && (
+                    <div className="alert alert-success bg-green-50 border-green-200 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span>✅</span>
+                        <span className="text-green-800">Thank you for your tribute! It has been added to the wall.</span>
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Location Section */}
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Your Location</span>
-                    </label>
-                    <div className="space-y-2">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Your Name *</span>
+                      </label>
                       <input
                         type="text"
-                        {...register("location")}
+                        {...register("name", { 
+                          required: "Name is required",
+                          minLength: { value: 2, message: "Name must be at least 2 characters" }
+                        })}
                         className="input input-bordered"
-                        placeholder={userLocation || "City, Country"}
-                        value={watch('location') || userLocation || ''}
-                        onChange={(e) => setValue('location', e.target.value)}
+                        placeholder="Enter your full name"
                       />
-                      <button
-                        type="button"
-                        onClick={getUserLocation}
-                        disabled={isGettingLocation}
-                        className="btn btn-outline btn-sm w-full"
+                      {errors.name && (
+                        <span className="text-red-500 text-sm">{errors.name.message}</span>
+                      )}
+                    </div>
+
+                    {/* Relationship Input - Always Show */}
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Your Relationship *</span>
+                      </label>
+                      <select 
+                        {...register("relationship", { required: "Please select your relationship" })}
+                        className="select select-bordered"
                       >
-                        {isGettingLocation ? (
+                        <option value="">Select your relationship</option>
+                        <option value="Fan">Fan</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Fellow Minister">Fellow Minister</option>
+                        <option value="Family">Family</option>
+                        <option value="Mentee">Mentee</option>
+                        <option value="Spiritual Father">Spiritual Leader</option>
+                        <option value="International Fan">International Fan</option>
+                      </select>
+                      {errors.relationship && (
+                        <span className="text-red-500 text-sm">{errors.relationship.message}</span>
+                      )}
+                    </div>
+
+                    {/* Location Section */}
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Your Location</span>
+                      </label>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          {...register("location")}
+                          className="input input-bordered"
+                          placeholder={userLocation || "City, Country"}
+                          value={watch('location') || userLocation || ''}
+                          onChange={(e) => setValue('location', e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={getUserLocation}
+                          disabled={isGettingLocation}
+                          className="btn btn-outline btn-sm w-full"
+                        >
+                          {isGettingLocation ? (
+                            <>
+                              <span className="loading loading-spinner loading-xs"></span>
+                              Detecting Location...
+                            </>
+                          ) : (
+                            <>
+                              📍 Use My Current Location
+                            </>
+                          )}
+                        </button>
+                        {locationError && (
+                          <div className="alert alert-warning bg-yellow-50 border-yellow-200 py-2">
+                            <span className="text-yellow-800 text-sm">{locationError}</span>
+                          </div>
+                        )}
+                        {userLocation && !locationError && (
+                          <div className="text-green-600 text-sm flex items-center gap-1">
+                            <span>✅</span>
+                            Location detected: {userLocation}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Your Message *</span>
+                      </label>
+                      <textarea
+                        {...register("message", { 
+                          required: "Message is required",
+                          minLength: { 
+                            value: 10, 
+                            message: "Message must be at least 10 characters" 
+                          },
+                          maxLength: {
+                            value: 500,
+                            message: "Message must be less than 500 characters"
+                          }
+                        })}
+                        className="textarea textarea-bordered h-32"
+                        placeholder="Share your memories, how her music impacted you, or a prayer..."
+                      />
+                      {errors.message && (
+                        <span className="text-red-500 text-sm">{errors.message.message}</span>
+                      )}
+                    </div>
+
+                    <div className="form-control mt-6">
+                      <button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        className="btn bg-memorial-gold text-memorial-dark border-none hover:bg-yellow-400 text-lg py-3"
+                      >
+                        {isSubmitting ? (
                           <>
-                            <span className="loading loading-spinner loading-xs"></span>
-                            Detecting Location...
+                            <span className="loading loading-spinner"></span>
+                            Lighting Candle...
                           </>
                         ) : (
                           <>
-                            📍 Use My Current Location
+                            Light a Candle 🕯️
                           </>
                         )}
                       </button>
-                      {locationError && (
-                        <div className="alert alert-warning bg-yellow-50 border-yellow-200 py-2">
-                          <span className="text-yellow-800 text-sm">{locationError}</span>
-                        </div>
-                      )}
-                      {userLocation && !locationError && (
-                        <div className="text-green-600 text-sm flex items-center gap-1">
-                          <span>✅</span>
-                          Location detected: {userLocation}
-                        </div>
-                      )}
                     </div>
-                  </div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Your Message *</span>
-                    </label>
-                    <textarea
-                      {...register("message", { 
-                        required: "Message is required",
-                        minLength: { 
-                          value: 10, 
-                          message: "Message must be at least 10 characters" 
-                        },
-                        maxLength: {
-                          value: 500,
-                          message: "Message must be less than 500 characters"
-                        }
-                      })}
-                      className="textarea textarea-bordered h-32"
-                      placeholder="Share your memories, how her music impacted you, or a prayer..."
-                    />
-                    {errors.message && (
-                      <span className="text-red-500 text-sm">{errors.message.message}</span>
-                    )}
-                  </div>
-
-                  <div className="form-control mt-6">
-                    <button 
-                      type="submit" 
-                      disabled={isSubmitting}
-                      className="btn bg-memorial-gold text-memorial-dark border-none hover:bg-yellow-400 text-lg py-3"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="loading loading-spinner"></span>
-                          Lighting Candle...
-                        </>
-                      ) : (
-                        <>
-                          Light a Candle 🕯️
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <p className="text-gray-500 text-xs text-center">
-                    Your tribute will be visible to others visiting this memorial
-                  </p>
-                </form>
+                    <p className="text-gray-500 text-xs text-center">
+                      Your tribute will be visible to others visiting this memorial
+                    </p>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Tributes Display */}
-          <div className="lg:col-span-2">
+          {/* Tributes Display - Adjusted column span based on form visibility */}
+          <div className={showTributeForm ? "lg:col-span-2" : "lg:col-span-3"}>
+            {/* Share Tribute Button - Only show when form is hidden */}
+            {!showTributeForm && !preview && (
+              <div className="text-center mb-8">
+                <button
+                  onClick={handleShareTributeClick}
+                  className="btn bg-pink-500 text-white border-none hover:bg-pink-600 text-lg py-4 px-8 shadow-lg"
+                >
+                  <span className="text-xl mr-2">🕯️</span>
+                  Share Your Tribute
+                </button>
+                <p className="text-gray-500 mt-2">Be part of Betty's eternal legacy</p>
+              </div>
+            )}
+
             {tributes.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🕯️</div>
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">No tributes yet</h3>
-                <p className="text-gray-500">Be the first to share a memory and light a candle</p>
+                <p className="text-gray-500 mb-6">Be the first to share a memory and light a candle</p>
+                {!preview && (
+                  <button
+                    onClick={handleShareTributeClick}
+                    className="btn bg-pink-500 text-white border-none hover:bg-pink-600"
+                  >
+                    Share First Tribute
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -659,21 +703,21 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
 
                 {/* Live Candle Counter for Full Page */}
                 {!preview && (
-                  <div className="mt-8 bg-gradient-to-r from-memorial-gold/10 to-memorial-dark/5 rounded-2xl p-6 text-center">
+                  <div className="mt-8 bg-gradient-to-r from-pink-50 to-pink-100 rounded-2xl p-6 text-center border border-pink-200">
                     <div className="flex items-center justify-center gap-4 mb-4">
-                      <div className="text-4xl animate-pulse">🕯️</div>
+                      <div className="text-4xl animate-pulse text-pink-500">🕯️</div>
                       <div>
-                        <div className="text-2xl font-bold text-memorial-gold">
-                          {tributes.filter(t => t.hasCandle).length} Candles Burning
+                        <div className="text-2xl font-bold text-pink-600">
+                          {candlesLit} Candles Burning
                         </div>
-                        <p className="text-gray-600">
+                        <p className="text-pink-700">
                           Join the continuous prayer vigil in Betty's memory
                         </p>
                       </div>
                     </div>
                     <button 
                       onClick={lightAllCandles}
-                      className="btn btn-outline border-memorial-gold text-memorial-gold hover:bg-memorial-gold hover:text-white"
+                      className="btn bg-pink-500 text-white border-none hover:bg-pink-600"
                     >
                       Light All Candles
                     </button>
