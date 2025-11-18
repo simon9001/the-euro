@@ -13,7 +13,7 @@ const videos: Video[] = [
     views: "15.2M",
     uploadDate: "2020-03-15",
     thumbnail: "/images/videos/11th-hour.jpg",
-    youtubeId: "dQw4w9WgXcQ" // Example ID
+    youtubeId: "meB2XEwUUE8" // Updated ID from the YouTube link
   },
   {
     id: 2,

@@ -219,73 +219,55 @@ export default function TimelineSection({ preview = false }: TimelineSectionProp
           </div>
         )}
 
-        <div className="timeline relative">
-          {/* Vertical Line */}
-          <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-memorial-gold via-memorial-dark to-memorial-gold transform -translate-x-1/2 hidden md:block"></div>
-          
+        {/* Responsive Timeline Grid */}
+        <div className="timeline-grid">
           {visibleEvents.map((event, index) => (
-            <div key={index} className={`timeline-item mb-8 animate-fade-in ${
-              index % 2 === 0 ? 'md:pr-8 md:pl-0' : 'md:pl-8 md:pr-0'
-            }`}>
-              <div className="flex flex-col md:flex-row items-start gap-6">
-                {/* Left side for even, right side for odd */}
-                <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right md:order-1' : 'md:text-left md:order-2'}`}>
-                  <div className={`card bg-base-100 shadow-lg hover:shadow-xl transition-shadow ${
-                    index % 2 === 0 ? 'md:mr-8' : 'md:ml-8'
-                  }`}>
-                    <div className="card-body">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl">{event.icon}</div>
-                          <h3 className="card-title text-memorial-dark text-lg">{event.title}</h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-memorial-gold font-semibold text-sm whitespace-nowrap">
-                            {event.date}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-gray-700 mb-4">
-                        {preview && index >= 4 
-                          ? `${event.description.substring(0, 120)}...`
-                          : event.description
-                        }
-                      </p>
-
-                      {preview && index >= 4 && (
-                        <Link 
-                          to="/timeline" 
-                          className="inline-flex items-center gap-1 text-memorial-gold font-semibold hover:underline text-sm"
-                        >
-                          Read full story →
-                        </Link>
-                      )}
-
-                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                        <span className={`badge badge-sm ${getTypeColor(event.type)} text-white`}>
-                          {getTypeLabel(event.type)}
-                        </span>
-                        {event.significance && (
-                          <span className="text-gray-500 text-xs text-right flex-1 ml-2">
-                            {event.significance}
-                          </span>
-                        )}
-                      </div>
+            <div key={index} className="timeline-item animate-fade-in">
+              <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow h-full">
+                <div className="card-body">
+                  {/* Header with Icon, Title, and Date */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="text-2xl flex-shrink-0">{event.icon}</div>
+                      <h3 className="card-title text-memorial-dark text-lg leading-tight">
+                        {event.title}
+                      </h3>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-memorial-gold font-semibold text-sm whitespace-nowrap">
+                        {event.date}
+                      </span>
                     </div>
                   </div>
-                </div>
 
-                {/* Timeline Marker - Center */}
-                <div className="flex items-center justify-center md:absolute left-1/2 transform -translate-x-1/2 md:w-16 z-10 md:order-1">
-                  <div className={`w-4 h-4 rounded-full ${getTypeColor(event.type)} ring-4 ring-white shadow-lg`}></div>
-                </div>
+                  {/* Description */}
+                  <p className="text-gray-700 mb-4 flex-grow">
+                    {preview && index >= 4 
+                      ? `${event.description.substring(0, 120)}...`
+                      : event.description
+                    }
+                  </p>
 
-                {/* Date on opposite side for desktop */}
-                <div className={`flex-1 hidden md:block ${index % 2 === 0 ? 'md:text-left md:order-2' : 'md:text-right md:order-1'}`}>
-                  <div className={`p-4 ${index % 2 === 0 ? 'ml-8' : 'mr-8'}`}>
-                    <div className="text-lg font-semibold text-memorial-dark">{event.date}</div>
-                    <div className="text-gray-500 text-sm mt-1">{getTypeLabel(event.type)}</div>
+                  {/* Read More Link for Preview */}
+                  {preview && index >= 4 && (
+                    <Link 
+                      to="/timeline" 
+                      className="inline-flex items-center gap-1 text-memorial-gold font-semibold hover:underline text-sm mb-4"
+                    >
+                      Read full story →
+                    </Link>
+                  )}
+
+                  {/* Footer with Type and Significance */}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-auto pt-4 border-t border-gray-100">
+                    <span className={`badge badge-sm ${getTypeColor(event.type)} text-white self-start sm:self-center`}>
+                      {getTypeLabel(event.type)}
+                    </span>
+                    {event.significance && (
+                      <span className="text-gray-500 text-xs text-right">
+                        {event.significance}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -354,13 +336,35 @@ export default function TimelineSection({ preview = false }: TimelineSectionProp
       </div>
 
       <style>{`
-        @media (min-width: 768px) {
-          .timeline-item:nth-child(odd) {
-            flex-direction: row;
+        .timeline-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          gap: 2rem;
+        }
+        
+        @media (max-width: 640px) {
+          .timeline-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
           }
-          .timeline-item:nth-child(even) {
-            flex-direction: row-reverse;
+        }
+        
+        @media (min-width: 641px) and (max-width: 768px) {
+          .timeline-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
           }
+        }
+        
+        @media (min-width: 1024px) {
+          .timeline-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+          }
+        }
+        
+        .timeline-item {
+          break-inside: avoid;
         }
         
         .animate-fade-in {

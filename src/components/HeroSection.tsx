@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { type JSX } from 'react/jsx-runtime'
 
+
 export default function HeroSection(): JSX.Element {
   const [isVisible, setIsVisible] = useState<boolean>(false)
 
@@ -19,7 +20,7 @@ export default function HeroSection(): JSX.Element {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(https://lh3.googleusercontent.com/GuOZco3BtZrqs-6AIZEKkwGNq-u4RnOMgDJ6lb60qIxbdCfWVSP_ORcsekbGhOCHzY0gfKfdrVqwlo8N=w2880-h1200-p-l90-rj)'
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(https://th.bing.com/th/id/OIP.HlxMXAD8QFiFznf0iUdLewHaD4?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3)'
         }}
       />
       
@@ -29,10 +30,15 @@ export default function HeroSection(): JSX.Element {
             Betty Bayo
           </h1>
           <p className="text-xl md:text-2xl mb-6 animate-fade-in animation-delay-300">
-            1985 - 2024
+            1985 - 2025
           </p>
+        
           <p className="text-lg md:text-xl italic mb-8 max-w-2xl mx-auto animate-fade-in animation-delay-500">
             "Her voice touched heaven, her music touched our souls. A gospel icon whose legacy will forever inspire generations."
+          </p>
+          <p className="text-lg md:text-xl italic mb-8 max-w-2xl mx-auto animate-fade-in animation-delay-500">
+          Burial 
+          20th November, 2025
           </p>
           <button 
             onClick={scrollToStory}

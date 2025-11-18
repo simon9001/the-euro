@@ -10,17 +10,18 @@ export interface SectionProps {
     songs: string[];
     description: string;
   }
-  
   export interface Tribute {
-    id: number;
-    location: string;
+    id: string | number;
     name: string;
     message: string;
     date: string;
     hasCandle: boolean;
-    photo?: string;
-    relationship: string;
+    location?: string;
+    relationship?: string;
+    uuid?: string;        // For ownership tracking
+    ts?: number;          // Timestamp
   }
+  
   
   export interface GalleryImage {
     id: number;

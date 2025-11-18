@@ -1,114 +1,290 @@
 // src/components/TributeWallSection.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router'
 import { type Tribute, type TributeFormData } from '../types'
 
-// Sample initial tributes
-const initialTributes: Tribute[] = [
-  {
-    id: 1,
-    name: "Sarah M.",
-    message: "Betty's music got me through my darkest times. Her voice was truly a gift from God. I'll never forget how '11th Hour' helped me trust God's timing during my unemployment season.",
-    date: "2024-01-15",
-    hasCandle: true,
-    location: "Nairobi, Kenya",
-    relationship: "Fan"
-  },
-  {
-    id: 2,
-    name: "Pastor John Kamau",
-    message: "Her ministry through music touched countless lives. She was a true servant of God who remained humble despite her success. I had the honor of hosting her at our church in 2022.",
-    date: "2024-01-14",
-    hasCandle: true,
-    location: "Mombasa, Kenya",
-    relationship: "Fellow Minister"
-  },
-  {
-    id: 3,
-    name: "Grace Wanjiru",
-    message: "Betty was my spiritual big sister. She mentored me when I started in gospel music and taught me that ministry is about hearts, not charts. Her legacy lives on in all she touched.",
-    date: "2024-01-16",
-    hasCandle: true,
-    location: "Kiambu, Kenya",
-    relationship: "Mentee"
-  },
-  {
-    id: 4,
-    name: "David & Family",
-    message: "To the world, she was Betty Bayo. To us, she was loving mother, devoted wife, and our prayer warrior. Her faith never wavered, even at the end. We miss her every day.",
-    date: "2024-01-13",
-    hasCandle: true,
-    location: "Family",
-    relationship: "Family"
-  },
-  {
-    id: 5,
-    name: "Reverend Michael",
-    message: "I witnessed Betty's growth from a young choir member to a gospel powerhouse. Her authenticity and dedication to God's work was inspiring. Heaven gained a true worshipper.",
-    date: "2024-01-17",
-    hasCandle: true,
-    location: "Nakuru, Kenya",
-    relationship: "Spiritual Father"
-  },
-  {
-    id: 6,
-    name: "Emily Chen",
-    message: "Though I never met her personally, her music transcended cultures and languages. As a Chinese Christian living in Kenya, her songs became my prayer language during difficult times.",
-    date: "2024-01-18",
-    hasCandle: false,
-    location: "Kisumu, Kenya",
-    relationship: "International Fan"
-  }
-]
+// ✅ Your live Google Apps Script Web App URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwX9xk5Z1qUkBPPUhjR7v_2UMaJpTXQhTfpyLSmcWYzMtz4u9zVL8P-3ZpQ66IWlgJNBA/exec'
 
 interface TributeWallSectionProps {
   preview?: boolean;
 }
 
+// Generate unique user UUID for ownership tracking
+const generateUserUUID = (): string => {
+  if (!localStorage.getItem('user_uuid')) {
+    const uuid = crypto.randomUUID()
+    localStorage.setItem('user_uuid', uuid)
+    return uuid
+  }
+  return localStorage.getItem('user_uuid')!
+}
+
 export default function TributeWallSection({ preview = false }: TributeWallSectionProps) {
-  const [tributes, setTributes] = useState<Tribute[]>(initialTributes)
+  const [tributes, setTributes] = useState<Tribute[]>([])
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [showSuccess, setShowSuccess] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [userUUID, setUserUUID] = useState<string>('')
+  const [userLocation, setUserLocation] = useState<string>('')
+  const [isGettingLocation, setIsGettingLocation] = useState<boolean>(false)
+  const [locationError, setLocationError] = useState<string>('')
 
   const { 
     register, 
     handleSubmit, 
     reset, 
+    setValue,
+    watch,
     formState: { errors } 
   } = useForm<TributeFormData>()
 
   const visibleTributes = preview ? tributes.slice(0, 4) : tributes
 
+  // Load tributes on component mount
+  useEffect(() => {
+    const uuid = generateUserUUID()
+    setUserUUID(uuid)
+    loadAllTributes()
+  }, [])
+
+  // Get user's device location
+  const getUserLocation = (): void => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser')
+      return
+    }
+
+    setIsGettingLocation(true)
+    setLocationError('')
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+          
+          // Reverse geocoding to get location name
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          )
+          
+          const locationData = await response.json()
+          
+          let locationString = ''
+          if (locationData.city) {
+            locationString = locationData.city
+          }
+          if (locationData.countryName) {
+            locationString += locationString ? `, ${locationData.countryName}` : locationData.countryName
+          }
+          
+          if (locationString) {
+            setUserLocation(locationString)
+            setValue('location', locationString)
+          } else {
+            setUserLocation('Location detected')
+            setValue('location', 'Location detected')
+          }
+        } catch (error) {
+          console.error('Error getting location name:', error)
+          setUserLocation('Location detected')
+          setValue('location', 'Location detected')
+        }
+        
+        setIsGettingLocation(false)
+      },
+      (error) => {
+        console.error('Error getting location:', error)
+        setIsGettingLocation(false)
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Location access denied. Please enable location services.')
+            break
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Location information unavailable.')
+            break
+          case error.TIMEOUT:
+            setLocationError('Location request timed out.')
+            break
+          default:
+            setLocationError('An unknown error occurred while getting location.')
+            break
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    )
+  }
+
+  // Auto-detect location when component mounts in non-preview mode
+  useEffect(() => {
+    if (!preview) {
+      getUserLocation()
+    }
+  }, [preview])
+
+  // Load tributes from localStorage
+  const loadTributes = (): Tribute[] => {
+    const raw = localStorage.getItem('tributes_v1') || '[]'
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return []
+    }
+  }
+
+  const saveTributes = (arr: Tribute[]): void => {
+    localStorage.setItem('tributes_v1', JSON.stringify(arr))
+    setTributes(arr)
+  }
+
+  // POST new tribute to Google Apps Script
+  const submitToWebApp = async (name: string, relation: string, message: string, location: string): Promise<string | null> => {
+    const formData = new URLSearchParams()
+    formData.append('name', name)
+    formData.append('relation', relation)
+    formData.append('message', message)
+    formData.append('location', location)
+    formData.append('uuid', userUUID)
+    formData.append('ts', Date.now().toString())
+
+    try {
+      setIsSubmitting(true)
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await res.json()
+      setIsSubmitting(false)
+
+      if (data.status === 'success') return data.id
+
+      alert('Failed to submit tribute: ' + (data.message || 'Unknown error'))
+      return null
+
+    } catch (err) {
+      setIsSubmitting(false)
+      alert('Network or CORS error. Make sure the Apps Script is deployed and accessible.')
+      console.error(err)
+      return null
+    }
+  }
+
+  // DELETE tribute from Google Apps Script
+  const deleteTribute = async (id: string): Promise<void> => {
+    const payload = new FormData()
+    payload.append('deleteId', id)
+    payload.append('uuid', userUUID)
+
+    try {
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: payload })
+      const text = await res.text()
+      let data
+      try { 
+        data = JSON.parse(text) 
+      } catch { 
+        data = { status: 'deleted' } 
+      }
+
+      if (data.status === 'deleted') {
+        console.log(`Deleted tribute with id ${id}`)
+      } else {
+        console.warn('Delete failed or not found', id)
+      }
+    } catch (err) {
+      console.error('Error deleting tribute:', err)
+    }
+  }
+
+  // GET all tributes from Google Apps Script
+  const loadAllTributes = async (): Promise<void> => {
+    try {
+      setIsLoading(true)
+      const res = await fetch(SCRIPT_URL)
+      const json = await res.json()
+
+      // Expect { status: 'success', data: [...] }
+      const tributesData = json?.data || []
+      
+      // Transform the data to match our Tribute interface
+      const transformedTributes: Tribute[] = tributesData.map((tribute: any) => ({
+        id: tribute.id || tribute.timestamp,
+        name: tribute.name || 'Anonymous',
+        message: tribute.message,
+        date: tribute.timestamp ? new Date(tribute.timestamp).toISOString() : new Date().toISOString(),
+        hasCandle: true,
+        location: tribute.location || 'Kenya',
+        relationship: tribute.relation || 'Fan',
+        uuid: tribute.uuid,
+        ts: tribute.timestamp || Date.now()
+      }))
+
+      saveTributes(transformedTributes)
+    } catch (err) {
+      console.error('Error loading tributes:', err)
+      // Fallback to localStorage if API fails
+      const localTributes = loadTributes()
+      setTributes(localTributes)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const onSubmit = async (data: TributeFormData): Promise<void> => {
-    setIsSubmitting(true)
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
+    const locationToUse = data.location || userLocation || 'Kenya'
+    const id = await submitToWebApp(data.name, data.relationship || 'Fan', data.message, locationToUse)
+    if (!id) return
+
     const newTribute: Tribute = {
-      id: tributes.length + 1,
+      id,
       name: data.name,
       message: data.message,
-      date: new Date().toLocaleDateString('en-CA'),
+      date: new Date().toISOString(),
       hasCandle: true,
-      location: data.location || 'Kenya',
-      relationship: data.relationship || 'Fan'
+      location: locationToUse,
+      relationship: data.relationship || 'Fan',
+      uuid: userUUID,
+      ts: Date.now()
     }
     
-    setTributes([newTribute, ...tributes])
+    const updatedTributes = [...tributes, newTribute]
+    saveTributes(updatedTributes)
     reset()
-    setIsSubmitting(false)
     setShowSuccess(true)
     
     // Hide success message after 5 seconds
     setTimeout(() => setShowSuccess(false), 5000)
   }
 
-  const lightCandle = (id: number): void => {
+  const handleDeleteTribute = async (tribute: Tribute): Promise<void> => {
+    if (confirm('Delete your tribute?')) {
+      await deleteTribute(tribute.id as string)
+      const updated = tributes.filter(t => t.id !== tribute.id)
+      saveTributes(updated)
+    }
+  }
+
+  const lightCandle = (id: string | number): void => {
     setTributes(tributes.map(tribute => 
       tribute.id === id ? { ...tribute, hasCandle: true } : tribute
     ))
+  }
+
+  const clearAllTributes = (): void => {
+    if (confirm('Clear all tributes stored locally?')) {
+      localStorage.removeItem('tributes_v1')
+      setTributes([])
+    }
+  }
+
+  const lightAllCandles = (): void => {
+    setTributes(tributes.map(tribute => ({ ...tribute, hasCandle: true })))
   }
 
   const getRelationshipColor = (relationship: string): string => {
@@ -124,6 +300,34 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
     return colors[relationship] || 'bg-gray-100 text-gray-800'
   }
 
+  const formatDate = (dateString: string | number): string => {
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    } catch {
+      return 'Recent'
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <section id="tributes" className="section-padding bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="loading loading-spinner loading-lg text-memorial-gold mb-4"></div>
+              <p className="text-gray-600">Loading tributes...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section id="tributes" className="section-padding bg-white">
       <div className="max-w-7xl mx-auto">
@@ -135,14 +339,24 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
               Join {tributes.length}+ people in honoring Betty's memory and celebrating her eternal impact
             </p>
           </div>
-          {preview && (
-            <Link 
-              to="/tributes" 
-              className="btn bg-memorial-gold text-memorial-dark border-none hover:bg-yellow-400 lg:self-center"
-            >
-              View All Tributes
-            </Link>
-          )}
+          <div className="flex gap-2">
+            {preview && (
+              <Link 
+                to="/tributes" 
+                className="btn bg-memorial-gold text-memorial-dark border-none hover:bg-yellow-400 lg:self-center"
+              >
+                View All Tributes
+              </Link>
+            )}
+            {!preview && (
+              <button 
+                onClick={clearAllTributes}
+                className="btn btn-outline btn-sm text-gray-500"
+              >
+                Clear Local Cache
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Statistics */}
@@ -205,39 +419,73 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
                     )}
                   </div>
 
-                  {!preview && (
-                    <>
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Your Location</span>
-                        </label>
-                        <input
-                          type="text"
-                          {...register("location")}
-                          className="input input-bordered"
-                          placeholder="City, Country"
-                        />
-                      </div>
+                  {/* Relationship Input - Always Show */}
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Your Relationship *</span>
+                    </label>
+                    <select 
+                      {...register("relationship", { required: "Please select your relationship" })}
+                      className="select select-bordered"
+                    >
+                      <option value="">Select your relationship</option>
+                      <option value="Fan">Fan</option>
+                      <option value="Friend">Friend</option>
+                      <option value="Fellow Minister">Fellow Minister</option>
+                      <option value="Family">Family</option>
+                      <option value="Mentee">Mentee</option>
+                      <option value="Spiritual Father">Spiritual Leader</option>
+                      <option value="International Fan">International Fan</option>
+                    </select>
+                    {errors.relationship && (
+                      <span className="text-red-500 text-sm">{errors.relationship.message}</span>
+                    )}
+                  </div>
 
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Your Relationship</span>
-                        </label>
-                        <select 
-                          {...register("relationship")}
-                          className="select select-bordered"
-                        >
-                          <option value="Fan">Fan</option>
-                          <option value="Friend">Friend</option>
-                          <option value="Fellow Minister">Fellow Minister</option>
-                          <option value="Family">Family</option>
-                          <option value="Mentee">Mentee</option>
-                          <option value="Spiritual Father">Spiritual Leader</option>
-                          <option value="International Fan">International Fan</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
+                  {/* Location Section */}
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Your Location</span>
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        {...register("location")}
+                        className="input input-bordered"
+                        placeholder={userLocation || "City, Country"}
+                        value={watch('location') || userLocation || ''}
+                        onChange={(e) => setValue('location', e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={getUserLocation}
+                        disabled={isGettingLocation}
+                        className="btn btn-outline btn-sm w-full"
+                      >
+                        {isGettingLocation ? (
+                          <>
+                            <span className="loading loading-spinner loading-xs"></span>
+                            Detecting Location...
+                          </>
+                        ) : (
+                          <>
+                            📍 Use My Current Location
+                          </>
+                        )}
+                      </button>
+                      {locationError && (
+                        <div className="alert alert-warning bg-yellow-50 border-yellow-200 py-2">
+                          <span className="text-yellow-800 text-sm">{locationError}</span>
+                        </div>
+                      )}
+                      {userLocation && !locationError && (
+                        <div className="text-green-600 text-sm flex items-center gap-1">
+                          <span>✅</span>
+                          Location detected: {userLocation}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="form-control">
                     <label className="label">
@@ -292,120 +540,146 @@ export default function TributeWallSection({ preview = false }: TributeWallSecti
 
           {/* Tributes Display */}
           <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {visibleTributes.map((tribute) => (
-                <div 
-                  key={tribute.id} 
-                  className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
-                >
-                  <div className="card-body">
-                    {/* Header with name and candle */}
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="card-title text-memorial-dark group-hover:text-memorial-gold transition-colors">
-                          {tribute.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          {tribute.location && (
-                            <span className="text-gray-500 text-sm">📍 {tribute.location}</span>
-                          )}
-                          {tribute.relationship && (
-                            <span className={`badge badge-sm ${getRelationshipColor(tribute.relationship)}`}>
-                              {tribute.relationship}
-                            </span>
+            {tributes.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🕯️</div>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No tributes yet</h3>
+                <p className="text-gray-500">Be the first to share a memory and light a candle</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {visibleTributes.map((tribute, index) => (
+                    <div 
+                      key={tribute.id} 
+                      className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    >
+                      <div className="card-body">
+                        {/* Header with name and actions */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex-1">
+                                <h4 className="card-title text-memorial-dark group-hover:text-memorial-gold transition-colors">
+                                  {tribute.name || 'Anonymous'}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  {tribute.location && (
+                                    <span className="text-gray-500 text-sm">📍 {tribute.location}</span>
+                                  )}
+                                  {tribute.relationship && (
+                                    <span className={`badge badge-sm ${getRelationshipColor(tribute.relationship)}`}>
+                                      {tribute.relationship}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {tribute.uuid === userUUID && (
+                                <button 
+                                  onClick={() => handleDeleteTribute(tribute)}
+                                  className="btn btn-sm btn-ghost text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                                  title="Delete your tribute"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Candle */}
+                        <div className="flex justify-end mb-3">
+                          {tribute.hasCandle ? (
+                            <div className="text-memorial-gold text-2xl animate-pulse">🕯️</div>
+                          ) : (
+                            <button 
+                              onClick={() => lightCandle(tribute.id)}
+                              className="btn btn-sm btn-circle btn-outline text-memorial-gold border-memorial-gold hover:bg-memorial-gold hover:text-white"
+                              title="Light a candle"
+                            >
+                              🕯️
+                            </button>
                           )}
                         </div>
+
+                        {/* Message */}
+                        <p className="text-gray-700 mb-4 leading-relaxed">
+                          {preview && index >= 4
+                            ? `${tribute.message.substring(0, 120)}...`
+                            : tribute.message
+                          }
+                        </p>
+
+                        {preview && index >= 4 && (
+                          <Link 
+                            to="/tributes" 
+                            className="inline-flex items-center gap-1 text-memorial-gold font-semibold hover:underline text-sm mb-4"
+                          >
+                            Read full tribute →
+                          </Link>
+                        )}
+
+                        {/* Footer with date and actions */}
+                        <div className="card-actions justify-between items-center pt-4 border-t border-gray-100">
+                          <span className="text-gray-500 text-sm">
+                            {formatDate(tribute.ts || tribute.date)}
+                          </span>
+                          <div className="flex gap-2">
+                            <button className="btn btn-sm btn-ghost text-gray-500 hover:text-memorial-gold">
+                              🙏 Pray
+                            </button>
+                            {!preview && (
+                              <button className="btn btn-sm btn-ghost text-gray-500 hover:text-memorial-gold">
+                                💝 Love
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      {tribute.hasCandle ? (
-                        <div className="text-memorial-gold text-2xl animate-pulse">🕯️</div>
-                      ) : (
-                        <button 
-                          onClick={() => lightCandle(tribute.id)}
-                          className="btn btn-sm btn-circle btn-outline text-memorial-gold border-memorial-gold hover:bg-memorial-gold hover:text-white"
-                          title="Light a candle"
-                        >
-                          🕯️
-                        </button>
-                      )}
                     </div>
+                  ))}
+                </div>
 
-                    {/* Message */}
-                    <p className="text-gray-700 mb-4 leading-relaxed">
-                      {preview && tribute.id > 4 
-                        ? `${tribute.message.substring(0, 120)}...`
-                        : tribute.message
-                      }
-                    </p>
-
-                    {preview && tribute.id > 4 && (
+                {/* Show more tributes indicator */}
+                {preview && tributes.length > 4 && (
+                  <div className="text-center mt-8">
+                    <div className="bg-memorial-light rounded-xl p-6">
+                      <p className="text-gray-600 mb-4">
+                        And {tributes.length - 4} more heartfelt tributes from around the world
+                      </p>
                       <Link 
                         to="/tributes" 
-                        className="inline-flex items-center gap-1 text-memorial-gold font-semibold hover:underline text-sm mb-4"
+                        className="btn bg-memorial-gold text-memorial-dark border-none hover:bg-yellow-400"
                       >
-                        Read full tribute →
+                        Read All Tributes
                       </Link>
-                    )}
+                    </div>
+                  </div>
+                )}
 
-                    {/* Footer with date and actions */}
-                    <div className="card-actions justify-between items-center pt-4 border-t border-gray-100">
-                      <span className="text-gray-500 text-sm">
-                        {new Date(tribute.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      <div className="flex gap-2">
-                        <button className="btn btn-sm btn-ghost text-gray-500 hover:text-memorial-gold">
-                          🙏 Pray
-                        </button>
-                        {!preview && (
-                          <button className="btn btn-sm btn-ghost text-gray-500 hover:text-memorial-gold">
-                            💝 Love
-                          </button>
-                        )}
+                {/* Live Candle Counter for Full Page */}
+                {!preview && (
+                  <div className="mt-8 bg-gradient-to-r from-memorial-gold/10 to-memorial-dark/5 rounded-2xl p-6 text-center">
+                    <div className="flex items-center justify-center gap-4 mb-4">
+                      <div className="text-4xl animate-pulse">🕯️</div>
+                      <div>
+                        <div className="text-2xl font-bold text-memorial-gold">
+                          {tributes.filter(t => t.hasCandle).length} Candles Burning
+                        </div>
+                        <p className="text-gray-600">
+                          Join the continuous prayer vigil in Betty's memory
+                        </p>
                       </div>
                     </div>
+                    <button 
+                      onClick={lightAllCandles}
+                      className="btn btn-outline border-memorial-gold text-memorial-gold hover:bg-memorial-gold hover:text-white"
+                    >
+                      Light All Candles
+                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Show more tributes indicator */}
-            {preview && tributes.length > 4 && (
-              <div className="text-center mt-8">
-                <div className="bg-memorial-light rounded-xl p-6">
-                  <p className="text-gray-600 mb-4">
-                    And {tributes.length - 4} more heartfelt tributes from around the world
-                  </p>
-                  <Link 
-                    to="/tributes" 
-                    className="btn bg-memorial-gold text-memorial-dark border-none hover:bg-yellow-400"
-                  >
-                    Read All Tributes
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Live Candle Counter for Full Page */}
-            {!preview && (
-              <div className="mt-8 bg-gradient-to-r from-memorial-gold/10 to-memorial-dark/5 rounded-2xl p-6 text-center">
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <div className="text-4xl animate-pulse">🕯️</div>
-                  <div>
-                    <div className="text-2xl font-bold text-memorial-gold">
-                      {tributes.filter(t => t.hasCandle).length} Candles Burning
-                    </div>
-                    <p className="text-gray-600">
-                      Join the continuous prayer vigil in Betty's memory
-                    </p>
-                  </div>
-                </div>
-                <button className="btn btn-outline border-memorial-gold text-memorial-gold hover:bg-memorial-gold hover:text-white">
-                  Light All Candles
-                </button>
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
