@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { Routes, Route } from 'react-router'
 import Home from './pages/Home'
 import LifeStory from './pages/LifeStory'
-import Discography from './pages/Discography'
 import Tributes from './pages/Tributes'
 import Gallery from './pages/Gallery'
 import Timeline from './pages/Timeline'
@@ -35,7 +34,6 @@ function App(): JSX.Element {
       <Route path="/memorial" element={<Memorial />} />
         <Route path="/" element={<Home />} />
         <Route path="/story" element={<LifeStory />} />
-        <Route path="/music" element={<Discography />} />
         <Route path="/tributes" element={<Tributes />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/timeline" element={<Timeline />} />

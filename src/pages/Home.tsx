@@ -2,7 +2,6 @@
 import Navbar from '../components/Navbar'
 import HeroSection from '../components/HeroSection'
 import LifeStorySection from '../components/LifeStorySection'
-import DiscographySection from '../components/DiscographySection'
 import TributeWallSection from '../components/TributeWallSection'
 import GallerySection from '../components/GallerySection'
 import TimelineSection from '../components/TimelineSection'
@@ -17,7 +16,6 @@ export default function Home(): JSX.Element {
       <Navbar />
       <HeroSection />
       <LifeStorySection preview={true} />
-      <DiscographySection preview={true} />
       <TributeWallSection preview={true} />
       <GallerySection preview={true} />
       <TimelineSection preview={true} />

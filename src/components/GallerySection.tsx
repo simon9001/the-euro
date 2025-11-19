@@ -6,99 +6,43 @@ import { type GalleryImage } from '../types'
 const galleryImages: GalleryImage[] = [
   { 
     id: 1, 
-    src: "/images/gallery/1.jpg", 
-    caption: "Betty in Concert", 
-    description: "Captivating performance at the National Gospel Awards 2022",
+    src: "./assets/img1.webp", 
+    caption: "Live Concert", 
+    description: "Betty Bayo performing live on stage",
     category: "concert",
-    date: "2022"
+    date: "2023"
   },
   { 
     id: 2, 
-    src: "/images/gallery/2.jpg", 
+    src: "./assets/img2.webp", 
     caption: "Studio Session", 
-    description: "Recording her hit album 'Tena Tena' with producer Eric",
+    description: "Recording in the studio",
     category: "studio",
     date: "2023"
   },
   { 
     id: 3, 
-    src: "/images/gallery/3.jpg", 
-    caption: "Award Ceremony", 
-    description: "Receiving the Best Gospel Artist award with her family",
-    category: "awards",
-    date: "2022"
+    src: "./assets/img3.webp", 
+    caption: "Official Portrait", 
+    description: "Professional photoshoot",
+    category: "portrait",
+    date: "2023"
   },
   { 
     id: 4, 
-    src: "/images/gallery/4.jpg", 
-    caption: "With Fans", 
-    description: "Meeting and praying with fans after a powerful worship night",
-    category: "fans",
-    date: "2023"
-  },
-  { 
-    id: 5, 
-    src: "/images/gallery/5.jpg", 
-    caption: "Worship Moment", 
-    description: "Deep in worship during her 'Mwamba Imara' tour",
-    category: "worship",
-    date: "2022"
-  },
-  { 
-    id: 6, 
-    src: "/images/gallery/6.jpg", 
-    caption: "Family Time", 
-    description: "Cherished moments with her children during Christmas",
-    category: "personal",
-    date: "2022"
-  },
-  { 
-    id: 7, 
-    src: "/images/gallery/7.jpg", 
-    caption: "Radio Interview", 
-    description: "Sharing her testimony on national radio",
-    category: "media",
-    date: "2023"
-  },
-  { 
-    id: 8, 
-    src: "/images/gallery/8.jpg", 
-    caption: "Church Service", 
-    description: "Leading worship at her home church in Kiambu",
-    category: "ministry",
-    date: "2021"
-  },
-  { 
-    id: 9, 
-    src: "/images/gallery/9.jpg", 
-    caption: "Charity Event", 
-    description: "Supporting children's education through her foundation",
-    category: "charity",
-    date: "2022"
-  },
-  { 
-    id: 10, 
-    src: "/images/gallery/10.jpg", 
-    caption: "Backstage Moments", 
-    description: "Praying with the band before a major concert",
-    category: "performance",
-    date: "2023"
-  },
-  { 
-    id: 11, 
-    src: "/images/gallery/11.jpg", 
-    caption: "Music Video Shoot", 
-    description: "Filming the iconic '11th Hour' music video",
-    category: "studio",
+    src: "./assets/img4.webp", 
+    caption: "Press Photo", 
+    description: "Media appearance",
+    category: "press",
     date: "2020"
-  },
+  }, 
   { 
-    id: 12, 
-    src: "/images/gallery/12.jpg", 
-    caption: "Final Public Appearance", 
-    description: "Her last public message of hope and faith to supporters",
-    category: "personal",
-    date: "2023"
+    id: 5, // ✅ Fixed: Changed from 4 to 5 to make unique
+    src: "./assets/img5.webp", 
+    caption: "Award Ceremony", 
+    description: "Receiving music award",
+    category: "press",
+    date: "2021"
   }
 ]
 
@@ -136,8 +80,11 @@ export default function GallerySection({ preview = false }: GallerySectionProps)
   const getCategoryLabel = (category: string): string => {
     const labels: { [key: string]: string } = {
       'all': 'All Photos',
-      'performance': 'Live Performances',
+      'concert': 'Live Concerts', // ✅ Added missing category
       'studio': 'Studio Sessions',
+      'portrait': 'Portraits', // ✅ Added missing category
+      'press': 'Press & Media', // ✅ Added missing category
+      'performance': 'Live Performances',
       'awards': 'Awards & Recognition',
       'fans': 'With Fans',
       'worship': 'Worship Moments',
@@ -147,6 +94,11 @@ export default function GallerySection({ preview = false }: GallerySectionProps)
       'charity': 'Charity Events'
     }
     return labels[category] || category
+  }
+
+  // ✅ Fixed: Properly find index for lightbox navigation
+  const getImageIndex = (image: GalleryImage): number => {
+    return filteredImages.findIndex(img => img.id === image.id)
   }
 
   return (
@@ -175,7 +127,7 @@ export default function GallerySection({ preview = false }: GallerySectionProps)
           <div className="flex flex-wrap gap-2 mb-8 justify-center">
             {categories.map((category) => (
               <button
-                key={category}
+                key={category} // ✅ Unique key
                 onClick={() => setActiveCategory(category)}
                 className={`btn btn-sm ${
                   activeCategory === category
@@ -191,11 +143,11 @@ export default function GallerySection({ preview = false }: GallerySectionProps)
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-          {visibleImages.map((image) => (
+          {visibleImages.map((image, index) => (
             <div
-              key={image.id}
+              key={image.id} // ✅ Now all IDs are unique
               className="card bg-base-100 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden"
-              onClick={() => openLightbox(image, filteredImages.findIndex(img => img.id === image.id))}
+              onClick={() => openLightbox(image, getImageIndex(image))}
             >
               <figure className="aspect-square relative overflow-hidden">
                 <div className="w-full h-full bg-gradient-to-br from-memorial-gold/20 to-memorial-dark/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">

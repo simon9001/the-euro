@@ -9,6 +9,7 @@ export interface SectionProps {
     cover: string;
     songs: string[];
     description: string;
+    youtubeIds:string[];
   }
   export interface Tribute {
     id: string | number;
@@ -28,7 +29,7 @@ export interface SectionProps {
     src: string;
     caption: string;
     description: string;
-    category: 'concert' | 'charity' | 'personal' | 'ministry' | 'studio'| 'awards' | 'fans'|'worship' |'media'| 'performance'| '';
+    category: string;
     date: string;
   }
   
