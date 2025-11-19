@@ -6,7 +6,7 @@ import { type GalleryImage } from '../types'
 const galleryImages: GalleryImage[] = [
   { 
     id: 1, 
-    src: "./assets/img1.webp", 
+    src: "../assets/img1.webp", 
     caption: "Live Concert", 
     description: "Betty Bayo performing live on stage",
     category: "concert",
@@ -14,7 +14,7 @@ const galleryImages: GalleryImage[] = [
   },
   { 
     id: 2, 
-    src: "./assets/img2.webp", 
+    src: "../assets/img2.webp", 
     caption: "Studio Session", 
     description: "Recording in the studio",
     category: "studio",
@@ -22,7 +22,7 @@ const galleryImages: GalleryImage[] = [
   },
   { 
     id: 3, 
-    src: "./assets/img3.webp", 
+    src: "../assets/img3.webp", 
     caption: "Official Portrait", 
     description: "Professional photoshoot",
     category: "portrait",
@@ -30,7 +30,7 @@ const galleryImages: GalleryImage[] = [
   },
   { 
     id: 4, 
-    src: "./assets/img4.webp", 
+    src: "../assets/img4.webp", 
     caption: "Press Photo", 
     description: "Media appearance",
     category: "press",
@@ -38,7 +38,7 @@ const galleryImages: GalleryImage[] = [
   }, 
   { 
     id: 5, // ✅ Fixed: Changed from 4 to 5 to make unique
-    src: "./assets/img5.webp", 
+    src: "../assets/img5.webp", 
     caption: "Award Ceremony", 
     description: "Receiving music award",
     category: "press",
